@@ -59,8 +59,30 @@ jobs:
           ${{ runner.os }}-cloakbrowser-
 
     - name: 安装 CloakBrowser
+      shell: bash
+      env:
+        PYTHONFAULTHANDLER: "1"
       run: |
+        set +e
+
         uv run python -m cloakbrowser install
+        install_code=$?
+        echo "CloakBrowser 安装命令退出码: $install_code"
+    
+        CHROME="$HOME/.cloakbrowser/chromium-146.0.7680.177.5/chrome"
+    
+        if [ -f "$CHROME" ]; then
+          echo "===== 检查 Chromium 版本 ====="
+          "$CHROME" --version
+          echo "Chromium 版本检查退出码: $?"
+    
+          echo "===== 检查系统依赖 ====="
+          ldd "$CHROME" | grep "not found" || true
+        fi
+    
+        if [ "$install_code" -ne 0 ]; then
+          exit "$install_code"
+        fi
         echo "✅ CloakBrowser 安装完成"
 
     - name: 恢复余额历史缓存
